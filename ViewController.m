@@ -44,7 +44,7 @@
     [PCMRender switchFreq:YES];
     NSData *pcmData = [PCMRender renderChirpData:@"v08esi9alp"];
     
-    [pcmData writeToFile:@"/Users/hanchao/Desktop/aaa.caf" atomically:NO];
+    [pcmData writeToFile:@"/Users/hanchao/Desktop/aaa.wav" atomically:NO];
     
     return;
     

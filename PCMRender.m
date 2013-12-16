@@ -10,14 +10,14 @@
 #import <AudioToolbox/CAFFile.h>
 
 
-#define SAMPLE_RATE             22050           // 44100           //                                        //采样频率
+#define SAMPLE_RATE             44100           // 44100           //                                        //采样频率
 #define BB_SEMITONE 			1.05946311
 #define BB_BASEFREQUENCY		1760
 #define BB_BASEFREQUENCY_H		18000
 #define BB_BASEFREQUENCY_IS_H	1
 #define BB_CHARACTERS			"0123456789abcdefghijklmnopqrstuv"
 //#define BB_THRESHOLD            16
-#define BITS_PER_SAMPLE         2//16              //8               //
+#define BITS_PER_SAMPLE         2//没有用到。。。。
 #define BB_HEADER_0             17
 #define BB_HEADER_1             19
 #define DURATION				0.0872 // seconds 0.1744//
@@ -33,19 +33,20 @@ static float frequencies[32];
 //wav头的结构如下所示：
 typedef   struct   {
     char         fccID[4];//"RIFF"标志
-    unsigned   long       dwSize;//文件长度
+    unsigned   long       dwSize;//文件长度 Chunk size: 4 + 24 + (8 + M * Nc * Ns + (0 or 1))
     char         fccType[4];//"WAVE"标志
 }HEADER;
 
+//Each sample is M bytes long
 typedef   struct   {
     char         fccID[4];//"fmt"标志
     unsigned   long       dwSize;//Chunk size: 16
     unsigned   short     wFormatTag;// 格式类别
-    unsigned   short     wChannels;//声道数
-    unsigned   long       dwSamplesPerSec;//采样频率
-    unsigned   long       dwAvgBytesPerSec;//位速  sample_rate * 2 * chans//为什么乘2呢？因为此时是16位的PCM数据，一个采样占两个byte。
-    unsigned   short     wBlockAlign;//一个采样多声道数据块大小
-    unsigned   short     uiBitsPerSample;//一个采样占的bit数
+    unsigned   short     wChannels;//声道数 Nc
+    unsigned   long       dwSamplesPerSec;//采样频率 F
+    unsigned   long       dwAvgBytesPerSec;//F * M * Nc  位速
+    unsigned   short     wBlockAlign;//M * Nc 一个采样多声道数据块大小
+    unsigned   short     uiBitsPerSample;//一个采样占的bit数 rounds up to 8 * M
 }FMT;
 
 typedef   struct   {
