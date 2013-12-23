@@ -41,6 +41,10 @@
 
 -(IBAction)playAction:(id)sender
 {
+
+//http://rest.sinaapp.com/?c=rest&a=get&code=v08esi9alp&high_freq=q
+//http://rest.sinaapp.com/?c=rest&a=get&code=v08esi9alp
+    
     [PCMRender switchFreq:YES];
     NSData *pcmData = [PCMRender renderChirpData:@"v08esi9alpnbsmd0du"];
     
