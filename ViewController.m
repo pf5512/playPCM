@@ -42,7 +42,7 @@
 -(IBAction)playAction:(id)sender
 {
     [PCMRender switchFreq:YES];
-    NSData *pcmData = [PCMRender renderChirpData:@"v08esi9alp"];
+    NSData *pcmData = [PCMRender renderChirpData:@"v08esi9alpnbsmd0du"];
     
     [pcmData writeToFile:@"/Users/hanchao/Desktop/aaa.wav" atomically:NO];
     

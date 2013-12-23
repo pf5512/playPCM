@@ -10,7 +10,7 @@
 #import <AudioToolbox/CAFFile.h>
 
 
-#define SAMPLE_RATE             58000           // 44100           //                                        //采样频率
+#define SAMPLE_RATE             44100           //                                        //采样频率
 #define BB_SEMITONE 			1.05946311
 #define BB_BASEFREQUENCY		1760
 #define BB_BASEFREQUENCY_H		18000
@@ -277,37 +277,38 @@ int char_to_freq(char c, unsigned int *f) {
 }
 
 
-//void makeChirp(Float32 buffer[],int bufferLength,unsigned int freqArray[], int freqArrayLength, double duration_secs,
-//               long sample_rate, int bits_persample, int channels) {
-//    
-//    double theta = 0;
-//    int idx = 0;
-//    for (int i=0; i<freqArrayLength; i++) {
-//        
-//        double theta_increment = 2.0 * M_PI * freqArray[i] / sample_rate;
-//        
-//        // Generate the samples
-//        for (UInt32 frame = 0; frame < (duration_secs * sample_rate); frame++)
-//            //        for (UInt32 frame = 0; frame < (bufferLength / freqArrayLength); frame++)
-//        {
-//            Float32 vol = MAX_VOLUME * sqrt( 1.0 - (pow(frame - ((duration_secs * sample_rate) / 2), 2)
-//                                                    / pow(((duration_secs * sample_rate) / 2), 2)));
-//            
-//            buffer[idx++] = vol * sin(theta);
-//            if(channels == 2)
-//                buffer[idx++] = vol * sin(theta);
-//            
-//            theta += theta_increment;
-//            if (theta > 2.0 * M_PI)
-//            {
-//                theta -= 2.0 * M_PI;
-//            }
-//        }
-//        
-//    }
-//}
+void makeChirp(Float32 buffer[],int bufferLength,unsigned int freqArray[], int freqArrayLength, double duration_secs,
+               long sample_rate, int bits_persample, int channels) {
+    
+    double theta = 0;
+    int idx = 0;
+    for (int i=0; i<freqArrayLength; i++) {
+        
+        double theta_increment = 2.0 * M_PI * freqArray[i] / sample_rate;
+        
+        // Generate the samples
+        for (UInt32 frame = 0; frame < (duration_secs * sample_rate); frame++)
+            //        for (UInt32 frame = 0; frame < (bufferLength / freqArrayLength); frame++)
+        {
+            Float32 vol = MAX_VOLUME * sqrt( 1.0 - (pow(frame - ((duration_secs * sample_rate) / 2), 2)
+                                                    / pow(((duration_secs * sample_rate) / 2), 2)));
+            
+            buffer[idx++] = vol * sin(theta);
+            if(channels == 2)
+                buffer[idx++] = vol * sin(theta);
+            
+            theta += theta_increment;
+            if (theta > 2.0 * M_PI)
+            {
+                theta -= 2.0 * M_PI;
+            }
+        }
+        
+    }
+}
 
-void makeChirp(char buffer[],int bufferLength,unsigned int freqArray[], int freqArrayLength, double duration_secs,
+//8bit
+void makeChirp_8bit(char buffer[],int bufferLength,unsigned int freqArray[], int freqArrayLength, double duration_secs,
                long sample_rate, int bits_persample, int channels) {
     
 //    int theta = 0;
@@ -339,22 +340,90 @@ void makeChirp(char buffer[],int bufferLength,unsigned int freqArray[], int freq
             // other maximum amplitude.
             //
             buffer[idx++] = (int)(128 * factor);
-            
-            
-//
-//            buffer[idx++] = vol * sin(theta);
-//            if(channels == 2)
-//                buffer[idx++] = vol * sin(theta);
-//            
-//            theta += theta_increment;
-//            if (theta > 2.0 * M_PI)
-//            {
-//                theta -= 2.0 * M_PI;
-//            }
+
         }
         
     }
 }
+
+//16bit
+void makeChirp_16bit(short buffer[],int bufferLength,unsigned int freqArray[], int freqArrayLength, double duration_secs,
+               long sample_rate, int bits_persample, int channels) {
+    
+    //    int theta = 0;
+    int idx = 0;
+    for (int i=0; i<freqArrayLength; i++) {
+        
+        //        int theta_increment = 2.0 * M_PI * freqArray[i] / sample_rate;
+        
+        // Generate the samples
+        for (UInt32 frame = 0; frame < (duration_secs * sample_rate); frame++)
+        {
+            //         / 2 * PI     \        /                      1             \
+            // y = sin| -------- * t | = sin| 2 * PI * freq * ------------ * frame |
+            //         \ PERIOD     /        \                 sample_rate        /
+            //
+            
+            // 0 ~ MAX_VOLUME（0.5）之间
+            Float32 vol = MAX_VOLUME * sqrt( 1.0 - (pow(frame - ((duration_secs * sample_rate) / 2), 2)
+                                                    / pow(((duration_secs * sample_rate) / 2), 2)));
+            
+            double angle = 2 * M_PI * (double)freqArray[i] * ((double)frame / (double)sample_rate);
+            double factor = 0.5 *(sin(angle) + 1); // convert range that sin returns from [-1, 1] to [0, 1]
+            
+            //
+            // factor is in the range [0, 1]
+            // set the current sample to 2^(16-1) * factor
+            // (since we're dealing with 16-bit PCM)
+            // for a quieter wave, change 32768 to some
+            // other maximum amplitude.
+            //
+            buffer[idx++] = (short)(32768 * factor);
+            
+        }
+        
+    }
+}
+
+//32bit
+void makeChirp_32bit(Float32 buffer[],int bufferLength,unsigned int freqArray[], int freqArrayLength, double duration_secs,
+                     long sample_rate, int bits_persample, int channels) {
+    
+    //    int theta = 0;
+    int idx = 0;
+    for (int i=0; i<freqArrayLength; i++) {
+        
+        //        int theta_increment = 2.0 * M_PI * freqArray[i] / sample_rate;
+        
+        // Generate the samples
+        for (UInt32 frame = 0; frame < (duration_secs * sample_rate); frame++)
+        {
+            //         / 2 * PI     \        /                      1             \
+            // y = sin| -------- * t | = sin| 2 * PI * freq * ------------ * frame |
+            //         \ PERIOD     /        \                 sample_rate        /
+            //
+            
+            // 0 ~ MAX_VOLUME（0.5）之间
+            Float32 vol = MAX_VOLUME * sqrt( 1.0 - (pow(frame - ((duration_secs * sample_rate) / 2), 2)
+                                                    / pow(((duration_secs * sample_rate) / 2), 2)));
+            
+            double angle = 2 * M_PI * (double)freqArray[i] * ((double)frame / (double)sample_rate);
+            double factor = 0.5 *(sin(angle) + 1); // convert range that sin returns from [-1, 1] to [0, 1]
+            
+            //
+            // factor is in the range [0, 1]
+            // set the current sample to 2^(16-1) * factor
+            // (since we're dealing with 16-bit PCM)
+            // for a quieter wave, change 32768 to some
+            // other maximum amplitude.
+            //
+            buffer[idx++] = (Float32)(2147483648 * factor);
+            
+        }
+        
+    }
+}
+
 
 + (BOOL)isHighFreq {
     
@@ -409,8 +478,9 @@ void makeChirp(char buffer[],int bufferLength,unsigned int freqArray[], int freq
         
         //定义buffer总长度
         long bufferLength = (long)(duration * sampleRate * (serializeStr.length+2) * channels);//所有频率总长度(包括17，19)
-//        Float32 buffer[bufferLength];
-        char buffer[bufferLength];
+        Float32 buffer[bufferLength];
+//        char buffer[bufferLength];
+//        short buffer[bufferLength];
         memset(buffer, 0, sizeof(buffer));
         
         makeChirp(buffer, bufferLength, freqArray, serializeStr.length+2, duration, sampleRate, BITS_PER_SAMPLE, channels);
@@ -418,7 +488,7 @@ void makeChirp(char buffer[],int bufferLength,unsigned int freqArray[], int freq
         unsigned char wavHeaderByteArray[44];
         memset(wavHeaderByteArray, 0, sizeof(wavHeaderByteArray));
 //        addWAVHeader(wavHeaderByteArray, sampleRate, sizeof(Float32), channels, sizeof(buffer));
-        addWAVHeader(wavHeaderByteArray, sampleRate, sizeof(char), channels, sizeof(buffer));
+        addWAVHeader(wavHeaderByteArray, sampleRate, sizeof(buffer[0]), channels, sizeof(buffer));
         NSMutableData *chirpData = [[NSMutableData alloc] initWithBytes:wavHeaderByteArray length:sizeof(wavHeaderByteArray)];
         [chirpData appendBytes:buffer length:sizeof(buffer)];
         
